@@ -24,11 +24,12 @@ for(i = 0; i < rows.length; i++){
     eventList.alunos.push(rows[i][ex].fcSeg.event.numAlunos);
 
     var temp = 'Aula: ' + eventList.aula[i] + '\n';
-    temp += 'Data e hora: ' + eventList.data[i] + '\n';
+    temp += 'Data: ' + new Date(eventList.data[i]).toLocaleDateString('pt-br');
+    temp += ' Hora: ' + eventList.data[i].substring(11, 16) + '\n'
     temp += 'Sala: ' + eventList.sala[i] + '\n';
     temp += 'Professor: ' + eventList.professor[i] + '\n';
     temp += 'Número de alunos: ' + eventList.alunos[i];
 
-    alert(temp);    
+    //alert(temp);    
 }
 
