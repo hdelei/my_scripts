@@ -1,3 +1,10 @@
+/**
+ * @file Get The House Schedule Details
+ * @author Vanderlei Mendes 
+ * @version 1.0
+ * @description Alert Popup with detailed information from checked classes 
+ */
+
 
 //Get all divs based in bgcolor
 var rows = $('a').filter(function(){
