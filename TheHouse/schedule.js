@@ -30,6 +30,6 @@ for(i = 0; i < rows.length; i++){
     temp += 'Professor: ' + eventList.professor[i] + '\n';
     temp += 'Número de alunos: ' + eventList.alunos[i];
 
-    //alert(temp);    
+    alert(temp);    
 }
 
