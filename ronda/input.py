@@ -10,6 +10,7 @@ class Input():
         self.file = 'input.json'
         self.creation_time = path.getmtime(self.file)
         self.event = 0
+        self.BEEP_MUTE = 4
 
     def watch_file(self):
         mod_time = path.getmtime(self.file)
@@ -17,6 +18,9 @@ class Input():
             sleep(1)
             self.read_input()
             self.creation_time = mod_time
+            return self.event
+        else:
+            self.event = 0
             return self.event
 
     def read_input(self):

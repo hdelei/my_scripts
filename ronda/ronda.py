@@ -21,19 +21,12 @@ current_time = {
     'hh': 0,
     'mm': 0
 }
-interval = 20
+interval = 5
 warning = 3
 check_count = 0
 checklist =  [] #unlike python, arduino is required to have the max items preset
 service_enabled = True
 has_checkpoint = False
-
-#Beep variables
-beep_count = 0
-silence_time = False
-silence_time_start = 0
-time_intended = 1
-
 
 def generate_checklist():
     start_t = time_to_int(init_shift)
@@ -61,7 +54,6 @@ def generate_checklist():
 def time_to_int(h_m):
     return h_m['hh'] * 60 + h_m['mm']
 
-
 def int_to_time(hm):
     time_dict = {
         'hh': 0,
@@ -82,10 +74,12 @@ def get_time_now():
     }
     return current
 
-def closest_checkpoint(fake_time):
+def closest_checkpoint(): # in production, remove arg
+    global warning
+    warn_info = {'check_time': False, 'start':0, 'stop':0}
     time_int = get_int_time_now()
     #################
-    time_int = fake_time # remove after debugging
+    #time_int = fake_time # remove after debugging
     #########################
     for x in checklist:
         check_t = x - warning
@@ -94,10 +88,25 @@ def closest_checkpoint(fake_time):
             print('time_int - 3 = ', time_int)
 
             print('Round reached a checkpoint', x)
-            break
+            warn_info['start'] = time_int
+            warn_info['stop'] = x
+            warn_info['check_time'] = True
+            #print(warn_info)
+            break    
+    return warn_info
 
+#Beep variables
+beep_count = 0
+silence_time = False
+silence_time_start = 0
+time_intended = 1
+B_WARN = 1 # WARNING BEEP
+B_FAIL = 2 # FAIL BEEP
+B_OK = 3 # SHIFT BEEP OK
+B_MUTE = 4 # SILENCE TIME BETWEEN SHIFTS
 
-def beep(beep_type):        
+def beep(beep_type):    
+    if beep_type == B_MUTE: return
     
     global silence_time
     global silence_time_start
@@ -107,12 +116,12 @@ def beep(beep_type):
     freq = 2300
     dur = 95
 
-    if beep_type == 1:
+    if beep_type == B_WARN:
         check_silence_time()
         if silence_time == True:
             return
     
-    if(beep_type == 1):# short for led pulse
+    if(beep_type == B_WARN):# short for led pulse
         
         if beep_count == 4:
             silence_time = True
@@ -128,7 +137,7 @@ def beep(beep_type):
         #silence_time_start = time.time()
         #silence_time_start = time.time()
         
-    elif(beep_type == 2):# long for shift failed
+    elif(beep_type == B_FAIL):# long for shift failed
         print('shift failed!')
         dur = 700
         winsound.Beep(freq, dur)
@@ -162,6 +171,8 @@ def check_silence_time():
     else:        
         silence_time = True
 
+
+HIGH = 1 # constant for the button
 def input():
     new_data = 0
     with open('input.json') as json_file:
@@ -175,22 +186,59 @@ def input():
     return 0      
 
 def setup():
-    generate_checklist()
-    checklist.sort()
-    print('# list =\n', checklist)
+    generate_checklist() # important
+    checklist.sort() # important
+    print('# list =\n', checklist) #debug   
+    
+    #closest_checkpoint(1397) #debug
 
-    closest_checkpoint(1397)
-    main_loop()
-
+    main_loop() # important
 
 def main_loop():
-    global silence_time
-    pare = 0
+    global silence_time    
     button = io.Input()
+    #debug_point = 1397 # debug
 
-    while True:
-        #if pare >= 15: break    
-        new_input = button.watch_file()        
+    while True:                        
+        #shift_data = closest_checkpoint(debug_point)
+        shift_data = closest_checkpoint()
+        print('#### MAIN LOOP ####')
+        print(shift_data)
+
+        while shift_data['check_time']:
+            time_now = get_int_time_now()
+            #time_now = 1398
+            if shift_data['stop'] > time_now:
+                beep(B_WARN)
+            elif shift_data['stop'] == time_now:
+                beep(B_FAIL)
+                print('SYSTEM IN PAUSE FOR 60 SECONDS DUE TO SHIFT FAIL')
+                time.sleep(60)
+                break
+            
+            if button.watch_file() == HIGH:
+                beep(B_OK)                
+                delay_time = ((shift_data['stop'] - time_now) + 1) * 60
+                print('SYSTEM IN PAUSE FOR {} SECONDS'.format(delay_time))
+                # force pause until check_time is false, avoiding this loop
+                #time.sleep(10)
+                time.sleep(delay_time)
+                debug_point = 1402 # debug
+                break    
+
+
+        time.sleep(.4)       
+            
+
+        # 1 - if it's checkpoint time, set flag with start and keep warning period
+        # 2 - keep checking for input HIGH or LOW, while beep(B_WARN)
+        # 3 - keep checking for end warning period    
+
+
+        
+        
+        """ new_input = button.watch_file()   
+
         if new_input != None:
             silence_time = False
             beep(new_input)
@@ -198,7 +246,7 @@ def main_loop():
             beep(1)        
         
         time.sleep(.1)
-        
+         """
         
 
 
