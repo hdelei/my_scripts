@@ -1,0 +1,6 @@
+Create a shortcut with this argument
+C:\Windows\System32\cmd.exe /k E:\pytask\app\create_task.bat && exit
+
+Change the folder where the tasks is located
+
+* All loaded Python modules are built-in
